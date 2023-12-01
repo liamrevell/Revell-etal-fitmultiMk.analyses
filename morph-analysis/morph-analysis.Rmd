@@ -1,0 +1,186 @@
+---
+title: "Supplemental file to \"Testing for heterogeneous rates of discrete character
+  evolution on phylogenies\" -- analysis of *Anolis* caudal vertebrae number"
+author: "Liam J. Revell et al."
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+This code reiterates the analysis of *Anolis* caudal vertebrae evolution for the *phytools* method `fitmultiMk` as described in the study titled "Testing for heterogeneous rates of discrete character evolution on phylogenies" by Revell et al.
+
+```{r}
+## load packages
+library(phytools)
+library(geiger)
+library(foreach)
+library(doParallel)
+```
+```{r}
+## check package version
+packageVersion("phytools")
+```
+```{r}
+## set seed
+set.seed(99)
+```
+```{r}
+## read tree from file
+anolis_tree<-read.tree("mcc.tre")
+anolis_tree
+```
+```{r}
+## read data
+anolis_dat<-read.csv("anolis_caudal_vertebrae_data.csv",
+  row.names=1)
+## data columns are species labels, average caudal vertebrae,
+## average caudal vertebrae rounded to nearest
+head(anolis_dat)
+```
+```{r}
+## convert numeric vector to factor
+anolis_vert<-factor(setNames(anolis_dat[,3],anolis_dat[,1]),
+  levels=min(anolis_dat[,3]):max(anolis_dat[,3]))
+head(anolis_vert)
+```
+```{r}
+## prune tree to match data
+pruned.anolis_tree<-drop.tip(anolis_tree,
+  setdiff(anolis_tree$tip.label,anolis_dat[,1]))
+## check names match
+name.check(pruned.anolis_tree,anolis_vert,
+  data.names=names(anolis_vert))
+```
+```{r}
+## create design matrix for ordered evolution
+k<-length(levels(anolis_vert))
+ordered<-matrix(0,k,k,dimnames=list(levels(anolis_vert),
+  levels(anolis_vert)))
+for(i in 1:(k-1)){
+  ordered[i,i+1]<-1
+  ordered[i,i-1]<-2
+}
+ordered[k,k-1]<-2
+```
+```{r}
+## check first 5 rows & columns of matrix
+ordered[1:5,1:5]
+## check bottom 5 rows & columns of matrix
+ordered[(nrow(ordered)-5):nrow(ordered),
+  (ncol(ordered)-5):ncol(ordered)]
+```
+```{r}
+## convert factor to matrix
+anolis_vert<-to.matrix(anolis_vert,levels(anolis_vert))
+```
+```{r}
+## set number of optimization iterations per model
+niter<-10
+## open cluster for parallelized optimization
+ncores<-min(niter,parallel::detectCores()-2)
+mc<-makeCluster(ncores,type="PSOCK")
+registerDoParallel(cl=mc)
+```
+```{r}
+## run niter parallelized optimizations of single
+## regime model
+fits<-foreach(i=1:niter)%dopar%{
+  phytools::fitMk(pruned.anolis_tree,anolis_vert,
+    model=ordered,rand_start=TRUE)
+}
+logL<-sapply(fits,logLik)
+print(logL)
+```
+```{r}
+## select best-fitting of niter iterations
+fit.single<-fits[[which(logL==max(logL))[1]]]
+print(fit.single,digits=3)
+```
+```{r, fig.height=10, fig.width=10, dpi=300}
+## graph regimes on pruned tree
+## note this is not for publication as taxon sampling different
+## from other analysis (though the tree is the same)
+nodes<-c(133,113)
+pruned.anolis_tree<-paintSubTree(pruned.anolis_tree,
+  nodes[1],"M","I",stem=0.5)
+pruned.anolis_tree<-paintSubTree(pruned.anolis_tree,
+  nodes[2],"M","I",stem=0.5)
+cols<-setNames(c("brown","blue"),c("M","I"))
+plot(pruned.anolis_tree,cols,type="arc",arc_height=0.1,
+  part=1,fsize=0.7,ftype="i")
+```
+```{r}
+## run niter parallelized optimizations of multi-regime
+## model
+fits<-foreach(i=1:niter)%dopar%{
+  phytools::fitmultiMk(pruned.anolis_tree,anolis_vert,
+    model=ordered,rand_start=TRUE)
+}
+logL<-sapply(fits,logLik)
+print(logL)
+```
+```{r}
+## select best-fitting of niter iterations
+fit.multi<-fits[[which(logL==max(logL))[1]]]
+print(fit.multi,digits=3)
+```
+```{r}
+stopCluster(cl=mc)
+```
+```{r}
+## compare models
+anova(fit.single,fit.multi)
+```
+```{r}
+## print rates for each model
+fit.single$rates
+fit.multi$rates
+```
+```{r, fig.width=6, fig.height=10}
+## graph fitted models
+par(mfrow=c(2,1),mar=c(1.1,1.1,1.1,1.1))
+obj<-fit.multi
+obj$rates<-round(obj$rates[3:4],2)
+obj$regimes<-NULL
+class(obj)<-"fitMk"
+plot(obj,show.zeros=F,mar=rep(2.1,4),show.zeros=F,
+  tol=1e-3,cex.traits=0.8,cex.rates=0.4)
+mtext(text="a) Mainland caudal vertebra number",
+  adj=0,line=-1,cex=0.9)
+obj<-fit.multi
+obj$rates<-round(obj$rates[1:2],2)
+obj$regimes<-NULL
+class(obj)<-"fitMk"
+plot(obj,show.zeros=F,mar=rep(2.1,4),show.zeros=F,
+  tol=1e-3,cex.traits=0.8,cex.rates=0.4)
+mtext(text="b) Caribbean caudal vertebra number",
+  adj=0,line=-1,cex=0.9)
+```
+```{r}
+## repeat graph, but to export as PDF
+pdf(file="Figure_S2.pdf",width=6,height=10)
+par(mfrow=c(2,1),mar=c(1.1,1.1,1.1,1.1))
+obj<-fit.multi
+obj$rates<-round(obj$rates[3:4],2)
+obj$regimes<-NULL
+class(obj)<-"fitMk"
+plot(obj,show.zeros=F,mar=rep(2.1,4),show.zeros=F,
+  tol=1e-3,cex.traits=0.8,cex.rates=0.4)
+mtext(text="a) Mainland caudal vertebra number",
+  adj=0,line=-1,cex=0.9)
+obj<-fit.multi
+obj$rates<-round(obj$rates[1:2],2)
+obj$regimes<-NULL
+class(obj)<-"fitMk"
+plot(obj,show.zeros=F,mar=rep(2.1,4),show.zeros=F,
+  tol=1e-3,cex.traits=0.8,cex.rates=0.4)
+mtext(text="b) Caribbean caudal vertebra number",
+  adj=0,line=-1,cex=0.9)
+dev.off()
+```
+```{r}
+save.image(file="morph-analysis.Rdata")
+```

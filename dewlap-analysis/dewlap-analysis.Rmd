@@ -1,0 +1,341 @@
+---
+title: "Supplemental file to \"Testing for heterogeneous rates of discrete character
+  evolution on phylogenies\" -- analysis of *Anolis* dewlap evolution"
+author: "Liam J. Revell et al."
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+This code reiterates the analysis of *Anolis* dewlap color evolution for the *phytools* method `fitmultiMk` as described in the study titled "Testing for heterogeneous rates of discrete character evolution on phylogenies" by Revell et al.
+
+```{r}
+## load packages
+library(phytools)
+library(geiger)
+library(foreach)
+library(doParallel)
+```
+```{r}
+## check package version
+packageVersion("phytools")
+```
+```{r}
+## set seed
+set.seed(99)
+```
+```{r}
+## read tree & data from files
+treed <- read.tree("dewlap_tree_22feb2018.phy")
+dat <- read.csv("dewlap_colors_22feb2018.csv", row.names = 1)
+```
+```{r}
+## extract dominant color & substitute summary colors
+dat$domcol <- as.character(dat$dominant.color)
+dat$domcol[dat$domcol %in% c("black", "blue", "purple")] <- "black"
+dat$domcol[dat$domcol %in% 
+    c("green", "yellow-green", "yellow", "brown/yellow")] <- "yellow"
+dat$domcol[dat$domcol %in% c("red", "")] <- "red" #"" is wermuthi, clearly red
+dat$domcol[dat$domcol %in% c("orange", "brown")] <- "orange"
+dat$domcol[dat$domcol %in% c("peach", "pink")] <- "pink"
+dat$domcol[dat$domcol %in% c("white", "grey")] <- "white"
+```
+```{r}
+## dominant color - this has been aggregated to group (somewhat) 
+## similar colors and get it down to a manageable number with decent 
+## sample sizes
+summary(as.factor(dat$domcol))
+```
+```{r}
+## check names
+all(treed$tip.label == rownames(dat))
+```
+```{r}
+## paint the tree with (predominantly) mainland vs island clades. 
+## There are a few minor exceptions, since I wanted to have reasonably 
+## large clades for a split QuaSSE analysis. Could also use the "Island" 
+## variable to split off the mainland species.
+nodeA <- getMRCA(treed, c("auratus", "occultus"))
+treedA <- paintSubTree(treed,nodeA,"I","M",stem=0.5)
+nodeB <- getMRCA(treed, c("auratus", "sericeus"))
+treedB <- paintSubTree(treedA, nodeB, "M", stem=0.5)
+nodeC1 <- getMRCA(treed, c("grahami", "reconditus"))
+treedC1 <- paintSubTree(treedB, nodeC1, "I", "M", stem=0.5)
+nodeC <- getMRCA(treed, c("luciae", "roquet"))
+treedC <- paintSubTree(treedC1, nodeC, "I", stem=0.5)
+```
+```{r, fig.width=13.33, fig.height=13.33, dpi=144}
+cols<-setNames(c("brown","blue"),c("M","I"))
+tmp<-treedC
+tmp$tip.label<-paste("   ",tmp$tip.label,"   ",sep="")
+plotTree(tmp,color="#36454F",fsize=0.7,type="arc",arc_height=0.25,lwd=5,
+  ftype="i",mar=rep(0.5,4),part=1)
+par(fg="transparent")
+plotTree(tmp,color="white",fsize=0.7,type="arc",arc_height=0.25,lwd=3,
+  ftype="i",mar=rep(0.5,4),part=1,add=TRUE)
+cols1<-cols
+cols1[1]<-"transparent"
+plot(tmp,cols1,fsize=0.7,type="arc",arc_height=0.25,lwd=3,ftype="i",
+  mar=rep(0.5,4),part=1,add=TRUE)
+par(lty="dotted",lend=2)
+cols2<-cols
+cols2[2]<-"transparent"
+plot(tmp,cols2,fsize=0.7,type="arc",arc_height=0.25,lwd=3,ftype="i",
+  mar=rep(0.5,4),part=1,add=TRUE)
+par(fg="black",lty="solid")
+DomCol <- as.factor(setNames(as.character(dat$domcol), rownames(dat)))
+tiplabels(pie=to.matrix(DomCol[treedC$tip.label],
+  levels(DomCol)),piecol=levels(DomCol),cex=0.3)
+obj<-legend(x="topleft",legend=c("mainland","islands"),pch=22,pt.cex=2,
+  pt.bg=c("brown","blue"),bty="n",title="Geographic context",title.adj=0,
+  plot=FALSE)
+leg.cols<-c("black, blue, & purple",
+  "orange & brown",
+  "pink & peach",
+  "red",
+  "white & grey",
+  "yellow & green")
+text.x<-legend(x=obj$rect$left,y=obj$rect$top-10,legend=leg.cols,title.adj=0,
+  pch=21,pt.cex=2,pt.bg=levels(DomCol),bty="n",title="Dewlap color")$text$x[1]
+foo<-function(n,text.x){
+  leg.text<-paste(c("mainland","islands"),paste(rep(" ",n),collapse=""),sep="")
+  curr.x<-legend(x="topleft",legend=leg.text,pch=22,pt.cex=2,
+    pt.bg=c("brown","blue"),bty="n",title="Geographic context",
+    title.adj=0,plot=FALSE)$text$x[1]
+  abs(curr.x-text.x)
+}
+fit<-optimize(foo,c(0,10),text.x=text.x)
+legend(x="topleft",
+  legend=paste(c("mainland","islands"),paste(rep(" ",round(fit$minimum)),
+    collapse=""),sep=""),
+  lwd=5,lty="solid",
+  col="#36454F",bty="n",title="Geographic context",
+  title.adj=0)
+par(fg="transparent")
+legend(x="topleft",
+  legend=paste(c("mainland","islands"),paste(rep(" ",round(fit$minimum)),
+    collapse=""),sep=""),
+  lwd=3,lty="solid",
+  col="white",bty="n",title="Geographic context",
+  title.adj=0)
+legend(x="topleft",
+  legend=paste(c("mainland","islands"),paste(rep(" ",round(fit$minimum)),
+    collapse=""),sep=""),
+  lwd=3,lty=c("dashed","solid"),
+  col=c("brown","blue"),bty="n",title="Geographic context",
+  title.adj=0)
+```
+```{r}
+pdf(file="Figure_3.pdf",width=13.33,height=13.33)
+cols<-setNames(c("brown","blue"),c("M","I"))
+tmp<-treedC
+tmp$tip.label<-paste("   ",tmp$tip.label,"   ",sep="")
+plotTree(tmp,color="#36454F",fsize=0.7,type="arc",arc_height=0.25,lwd=5,
+  ftype="i",mar=rep(0.5,4),part=1)
+par(fg="transparent")
+plotTree(tmp,color="white",fsize=0.7,type="arc",arc_height=0.25,lwd=3,
+  ftype="i",mar=rep(0.5,4),part=1,add=TRUE)
+cols1<-cols
+cols1[1]<-"transparent"
+plot(tmp,cols1,fsize=0.7,type="arc",arc_height=0.25,lwd=3,ftype="i",
+  mar=rep(0.5,4),part=1,add=TRUE)
+par(lty="dotted",lend=2)
+cols2<-cols
+cols2[2]<-"transparent"
+plot(tmp,cols2,fsize=0.7,type="arc",arc_height=0.25,lwd=3,ftype="i",
+  mar=rep(0.5,4),part=1,add=TRUE)
+par(fg="black",lty="solid")
+DomCol <- as.factor(setNames(as.character(dat$domcol), rownames(dat)))
+tiplabels(pie=to.matrix(DomCol[treedC$tip.label],
+  levels(DomCol)),piecol=levels(DomCol),cex=0.3)
+obj<-legend(x="topleft",legend=c("mainland","islands"),pch=22,pt.cex=2,
+  pt.bg=c("brown","blue"),bty="n",title="Geographic context",title.adj=0,
+  plot=FALSE)
+leg.cols<-c("black, blue, & purple",
+  "orange & brown",
+  "pink & peach",
+  "red",
+  "white & grey",
+  "yellow & green")
+text.x<-legend(x=obj$rect$left,y=obj$rect$top-10,legend=leg.cols,title.adj=0,
+  pch=21,pt.cex=2,pt.bg=levels(DomCol),bty="n",title="Dewlap color")$text$x[1]
+foo<-function(n,text.x){
+  leg.text<-paste(c("mainland","islands"),paste(rep(" ",n),collapse=""),sep="")
+  curr.x<-legend(x="topleft",legend=leg.text,pch=22,pt.cex=2,
+    pt.bg=c("brown","blue"),bty="n",title="Geographic context",
+    title.adj=0,plot=FALSE)$text$x[1]
+  abs(curr.x-text.x)
+}
+fit<-optimize(foo,c(0,10),text.x=text.x)
+
+legend(x="topleft",
+  legend=paste(c("mainland","islands"),paste(rep(" ",round(fit$minimum)),
+    collapse=""),sep=""),
+  lwd=5,lty="solid",
+  col="#36454F",bty="n",title="Geographic context",
+  title.adj=0)
+par(fg="transparent")
+legend(x="topleft",
+  legend=paste(c("mainland","islands"),paste(rep(" ",round(fit$minimum)),
+    collapse=""),sep=""),
+  lwd=3,lty="solid",
+  col="white",bty="n",title="Geographic context",
+  title.adj=0)
+legend(x="topleft",
+  legend=paste(c("mainland","islands"),paste(rep(" ",round(fit$minimum)),
+    collapse=""),sep=""),
+  lwd=3,lty=c("dashed","solid"),
+  col=c("brown","blue"),bty="n",title="Geographic context",
+  title.adj=0)
+dev.off()
+```
+```{r}
+## set number of optimization iterations per model
+niter<-50
+## open cluster for parallelized optimization
+ncores<-min(niter,parallel::detectCores()-2)
+mc<-makeCluster(ncores,type="PSOCK")
+registerDoParallel(cl=mc)
+```
+```{r}
+## single-rate ER model
+fits<-foreach(i=1:niter)%dopar%{ 
+  phytools::fitMk(treedC, DomCol, model="ER", 
+    rand_start=TRUE)
+}
+logL<-sapply(fits,logLik)
+print(logL)
+```
+```{r}
+fitER1<-fits[[which(logL==max(logL))[1]]]
+print(fitER1,digits=3)
+```
+```{r}
+## single-rate SYM model
+fits<-foreach(i=1:niter)%dopar%{ 
+  phytools::fitMk(treedC, DomCol, model="SYM", 
+    rand_start=TRUE)
+}
+logL<-sapply(fits,logLik)
+print(logL)
+```
+```{r}
+fitSYM1<-fits[[which(logL==max(logL))[1]]]
+print(fitSYM1,digits=3)
+```
+```{r}
+## single-rate ARD model
+fits<-foreach(i=1:niter)%dopar%{ 
+  phytools::fitMk(treedC, DomCol, model="ARD", 
+    rand_start=TRUE)
+}
+logL<-sapply(fits,logLik)
+print(logL)
+```
+```{r}
+fitARD1<-fits[[which(logL==max(logL))[1]]]
+print(fitARD1,digits=3)
+```
+```{r}
+## multi-rate ER model
+fits<-foreach(i=1:niter)%dopar%{ 
+  phytools::fitmultiMk(treedC, DomCol, model="ER", 
+    rand_start=TRUE)
+}
+logL<-sapply(fits,logLik)
+print(logL)
+```
+```{r}
+fitERmulti1<-fits[[which(logL==max(logL))[1]]]
+print(fitERmulti1,digits=3)
+```
+```{r}
+## multi-rate SYM model
+fits<-foreach(i=1:niter)%dopar%{ 
+  phytools::fitmultiMk(treedC, DomCol, model="SYM", 
+    rand_start=TRUE)
+}
+logL<-sapply(fits,logLik)
+print(logL)
+```
+```{r}
+fitSYMmulti1<-fits[[which(logL==max(logL))[1]]]
+print(fitSYMmulti1,digits=3)
+```
+```{r}
+## multi-rate ARD model
+fits<-foreach(i=1:niter)%dopar%{ 
+  phytools::fitmultiMk(treedC, DomCol, model="ARD", 
+    rand_start=TRUE)
+}
+logL<-sapply(fits,logLik)
+print(logL)
+```
+```{r}
+fitARDmulti1<-fits[[which(logL==max(logL))[1]]]
+print(fitARDmulti1)
+```
+```{r}
+stopCluster(cl=mc)
+```
+```{r}
+## compare models
+anova(fitER1,fitERmulti1,fitSYM1,fitSYMmulti1,
+  fitARD1,fitARDmulti1)
+```
+```{r}
+## compute the mean rate by regime for each model
+## ER-S model
+fitER1$rates
+```
+```{r}
+## ER-M model (island, mainland)
+fitERmulti1$rates
+```
+```{r}
+## SYM-S model
+mean(fitSYM1$rates)
+```
+```{r}
+## SYM-M model (island, mainland)
+mean(fitSYMmulti1$rates[1:15])
+mean(fitSYMmulti1$rates[16:30])
+```
+```{r}
+## ARD-S model
+mean(fitARD1$rates)
+```
+```{r}
+## ARD-M model (island, mainland)
+mean(fitARDmulti1$rates[1:30])
+mean(fitARDmulti1$rates[31:60])
+```
+```{r, fig.width=12, fig.height=6}
+## just for illustrative purposes (even though this was not
+## a particularly well-supported model), here is the fitted 
+## ARD-M model
+par(mfrow=c(1,2))
+obj<-fitSYMmulti1
+obj$rates<-fitSYMmulti1$rates[16:30]
+obj$regimes<-NULL
+class(obj)<-"fitMk"
+plot(obj,show.zeros=F,mar=rep(2.1,4),show.zeros=F,
+	tol=1e-4,cex.traits=0.8,spacer=0.12)
+mtext(text="a) Mainland dewlap color evolution",
+    adj=0,line=-1,cex=1.2)
+obj<-fitSYMmulti1
+obj$rates<-fitSYMmulti1$rates[1:15]
+obj$regimes<-NULL
+class(obj)<-"fitMk"
+plot(obj,show.zeros=F,mar=rep(2.1,4),show.zeros=F,
+	tol=1e-3,cex.traits=0.8,spacer=0.12)
+mtext(text="b) Caribbean dewlap color evolution",
+    adj=0,line=-1,cex=1.2)
+```
+
+```{r}
+save.image(file="dewlap-analysis.Rdata")
+```
