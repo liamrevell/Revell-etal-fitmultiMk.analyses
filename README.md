@@ -8,10 +8,10 @@ Abstract: Many hypotheses in the field of phylogenetic comparative biology invol
 
 Details on repository:
 
-1. '\dewlap-analysis' contains data files and analysis code for the analysis of dewlap color evolution using the model. All files used are present in the folder, which also contains all R code (.Rmd) and a built R markdown file (.pdf) with figures and results. Analyses were undertaken using phytools 2.0.7 with R version 4.3.1.
+1. `\dewlap-analysis` contains data files and analysis code for the analysis of dewlap color evolution using the model. All files used are present in the folder, which also contains all R code (.Rmd) and a built R markdown file (.pdf) with figures and results. Analyses were undertaken using phytools 2.0.7 with R version 4.3.1.
 
-2. '\hrm-analysis' contains data files and analysis code for an analysis of dewlap color evolution and caudal vertebra number evolution under the hidden-rates model of Beaulieu et al. (2013), as per reviewer request at JEB. All files used are present in the folder, which also contains all R code. Since this analysis was added in response to reviewer feedback, it was undertaken using phytools 2.3.1 and R version 4.4.1.
+2. `\hrm-analysis` contains data files and analysis code for an analysis of dewlap color evolution and caudal vertebra number evolution under the hidden-rates model of Beaulieu et al. (2013), as per reviewer request at JEB. All files used are present in the folder, which also contains all R code. Since this analysis was added in response to reviewer feedback, it was undertaken using phytools 2.3.1 and R version 4.4.1.
 
-3. '\morph-analysis' contains data files and analysis code for the analysis of caudal vertebra number evolution using the model. All files used are present in the folder, which also contains all R code (.Rmd) and a built R markdown file (.pdf) with figures and results. Analyses were undertaken using phytools 2.0.7 with R version 4.3.1.
+3. `\morph-analysis` contains data files and analysis code for the analysis of caudal vertebra number evolution using the model. All files used are present in the folder, which also contains all R code (.Rmd) and a built R markdown file (.pdf) with figures and results. Analyses were undertaken using phytools 2.0.7 with R version 4.3.1.
 
-4. '\power-analysis' all analysis code and resultant data for the analysis of type I error and power the model. All files used are present in the folder, which also contains all R code (.Rmd) and a built R markdown file (.pdf) with figures and results. Analyses were undertaken using phytools 2.0.7 with R version 4.3.1.
+4. `\power-analysis` all analysis code and resultant data for the analysis of type I error and power the model. All files used are present in the folder, which also contains all R code (.Rmd) and a built R markdown file (.pdf) with figures and results. Analyses were undertaken using phytools 2.0.7 with R version 4.3.1.
