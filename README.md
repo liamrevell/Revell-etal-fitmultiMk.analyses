@@ -1,6 +1,8 @@
-# Revell.fitmultiMk
+# Data for "Testing for heterogeneous rates of discrete character evolution on phylogenies"
  
 This repository contains the files for the project "Testing for heterogeneous rates of discrete character evolution on phylogenies" by Liam J. Revell, Klaus P. Schliep, D. L. Mahler, and T. Ingram.
+
+Link to pre-print: https://doi.org/10.1101/2021.09.14.460362
 
 Author for correspondence: 
 - Liam J. Revell (liam.revell@umb.edu)
