@@ -13,7 +13,10 @@ Abstract:
 
 Details on content of the repository:
 
-1. `\dewlap-analysis` contains data files and analysis code for the analysis of dewlap color evolution using the model. All files used are present in the folder, which also contains all R code (.Rmd) and a built R markdown file (.pdf) with figures and results. Analyses were undertaken using phytools 2.0.7 with R version 4.3.1.
+1. `\dewlap-analysis` contains data files and analysis code for the analysis of dewlap color evolution using the model. All files used are present in the folder, which also contains all R code (.Rmd) and a built R markdown file (.pdf) with figures and results. Analyses were undertaken using phytools 2.0.7 with R version 4.3.1. Data files of this folder include:
+    * `dewlap_colors_22feb2018.csv` a comma separated value text file with Anolis lizard specific epithets (taxon labels) in column 1, category of geographic distribution in column 2 (labeled `Island`), ecomorphological classification if applicable in column 3 (`Ecomorph`), dewlap color categorization ranked by dominance in columns 4 through 7 (`dominant.color`, `secondary.color`, `tertiary.color`, `quarternary.color`), ...
+	* `dewlap_tree_22feb2018.phy` a plain text file...
+
 
 2. `\hrm-analysis` contains data files and analysis code for an analysis of dewlap color evolution and caudal vertebra number evolution under the hidden-rates model of Beaulieu et al. (2013), as per reviewer request at JEB. All files used are present in the folder, which also contains all R code. Since this analysis was added in response to reviewer feedback, it was undertaken using phytools 2.3.1 and R version 4.4.1.
 
