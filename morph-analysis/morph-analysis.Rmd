@@ -29,8 +29,12 @@ set.seed(99)
 ```
 ```{r}
 ## read tree from file
-anolis_tree<-read.tree("mcc.tre")
+anolis_tree<-read.tree("Gamble_MCC.phy")
 anolis_tree
+```
+```{r}
+## scale edge lengths to match dewlap analysis
+anolis_tree$edge.length<-anolis_tree$edge.length*(7.36138587/11.94994231)
 ```
 ```{r}
 ## read data
@@ -103,11 +107,13 @@ print(fit.single,digits=3)
 ## graph regimes on pruned tree
 ## note this is not for publication as taxon sampling different
 ## from other analysis (though the tree is the same)
-nodes<-c(133,113)
+nodes<-c(218,119,123)
 pruned.anolis_tree<-paintSubTree(pruned.anolis_tree,
   nodes[1],"M","I",stem=0.5)
 pruned.anolis_tree<-paintSubTree(pruned.anolis_tree,
   nodes[2],"M","I",stem=0.5)
+pruned.anolis_tree<-paintSubTree(pruned.anolis_tree,
+  nodes[3],"I","M",stem=0.5)
 cols<-setNames(c("brown","blue"),c("M","I"))
 plot(pruned.anolis_tree,cols,type="arc",arc_height=0.1,
   part=1,fsize=0.7,ftype="i")

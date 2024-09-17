@@ -1,0 +1,65 @@
+---
+title: "Supplemental file to \"Testing for heterogeneous rates of discrete character
+  evolution on phylogenies\" -- hidden-rates analysis of *Anolis* dewlap evolution"
+author: "Liam J. Revell et al."
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+## load packages
+library(phytools)
+```
+```{r}
+## load data & results from non-HRM analysis
+load("../dewlap-analysis/dewlap-analysis.Rdata")
+```
+```{r, echo=FALSE}
+load("dewlap-hrm-analysis.rda")
+```
+```{r, eval=FALSE}
+## fit hidden-rate models
+## equal-rates
+er_hrm.dewlap<-fitHRM(as.phylo(treedC),DomCol,
+  model="ER",parallel=TRUE,niter=10)
+er_hrm.dewlap
+```
+```{r, echo=FALSE}
+er_hrm.dewlap
+```
+```{r, eval=FALSE}
+## symmetric
+sym_hrm.dewlap<-fitHRM(treedC,DomCol,model="SYM",parallel=TRUE,
+  corHMM_model=TRUE,niter=10)
+sym_hrm.dewlap
+```
+```{r, echo=FALSE}
+sym_hrm.dewlap
+```
+```{r, eval=FALSE}
+ard_hrm.dewlap<-fitHRM(treedC,DomCol,model="ARD",parallel=TRUE,
+  corHMM_model=TRUE,niter=50)
+ard_hrm.dewlap
+```
+```{r, echo=FALSE}
+ard_hrm.dewlap
+```
+```{r}
+## check likelihood
+ard_hrm.dewlap$lik(as.Qmatrix(er_hrm.dewlap))
+```
+```{r}
+## compare models
+options(scipen=0)
+anova(fitER1,fitERmulti1,er_hrm.dewlap,
+  fitSYM1,fitSYMmulti1,sym_hrm.dewlap,
+  fitARD1,fitARDmulti1,ard_hrm.dewlap)
+```
+```{r, eval=FALSE}
+## save results
+save(er_hrm.dewlap,sym_hrm.dewlap,ard_hrm.dewlap,
+  file="dewlap-hrm-analysis.rda")
+```
